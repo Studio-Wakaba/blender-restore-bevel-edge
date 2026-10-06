@@ -59,7 +59,7 @@ The surrounding topology must still contain enough information to reconstruct th
 
 ## License
 
-Copyright © 2026 STUDIO WAKABA
+Copyright © 2026 Studio Wakaba
 
 This project is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
 
