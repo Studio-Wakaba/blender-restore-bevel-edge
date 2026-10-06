@@ -2,6 +2,8 @@
 
 A Blender add-on that reconstructs the original sharp edge from already-applied bevel geometry.
 
+![Restore Bevel Edge - Before and After](images/restore_bevel_edge_before_after.png)
+
 **Version:** 1.2.2  
 **Blender:** 5.2+
 
