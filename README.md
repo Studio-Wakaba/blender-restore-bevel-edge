@@ -4,7 +4,7 @@ A Blender add-on that reconstructs the original sharp edge from already-applied 
 
 ![Restore Bevel Edge - Before and After](images/restore_bevel_edge_before_after.png)
 
-**Version:** 1.2.2  
+**Version:** 1.2.3  
 **Blender:** 5.2+
 
 ## Features
@@ -15,7 +15,7 @@ A Blender add-on that reconstructs the original sharp edge from already-applied 
 - Restore a local bevel point from a single selected boundary vertex.
 - Reconstructs the original edge from the intersection of the adjacent face planes.
 - Supports Undo.
-- Localized context-menu label for English and Japanese Blender interfaces.
+- Localized menu labels, status messages, and error messages for English and Japanese Blender interfaces.
 
 ## Installation
 
@@ -65,7 +65,7 @@ This project is licensed under the GNU General Public License v3.0. See [LICENSE
 
 **Restore Bevel Edge** は、Blenderで適用済みのベベル形状から、元の鋭いエッジを復元するためのアドオンです。
 
-**バージョン:** 1.2.2  
+**バージョン:** 1.2.3  
 **対応Blender:** 5.2+
 
 ### 主な機能
@@ -76,7 +76,7 @@ This project is licensed under the GNU General Public License v3.0. See [LICENSE
 - 頂点を1つだけ選択して、その位置だけ局所的に復元
 - 元の2面の交線を計算してエッジを再構築
 - Undo対応
-- Blenderの表示言語に応じて、右クリックメニューを英語／日本語で表示
+- Blenderの表示言語に応じて、メニュー・成功メッセージ・エラーメッセージを英語／日本語で表示
 
 ### 使い方
 
