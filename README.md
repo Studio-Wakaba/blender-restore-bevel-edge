@@ -2,7 +2,7 @@
 
 A Blender add-on that reconstructs the original sharp edge from already-applied bevel geometry.
 
-**Version:** 1.2.1  
+**Version:** 1.2.2  
 **Blender:** 5.2+
 
 ## Features
@@ -63,7 +63,7 @@ This project is licensed under the GNU General Public License v3.0. See [LICENSE
 
 **Restore Bevel Edge** は、Blenderで適用済みのベベル形状から、元の鋭いエッジを復元するためのアドオンです。
 
-**バージョン:** 1.2.1  
+**バージョン:** 1.2.2  
 **対応Blender:** 5.2+
 
 ### 主な機能
