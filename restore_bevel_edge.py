@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Restore Bevel Edge",
     "author": "STUDIO WAKABA",
-    "version": (1, 2, 2),
+    "version": (1, 2, 3),
     "blender": (5, 2, 0),
     "location": "Edit Mode > Context Menu",
     "description": "Restore applied bevel geometry from face, edge, vertex chain, or a single boundary vertex",
@@ -13,6 +13,15 @@ import bmesh
 from mathutils.geometry import intersect_plane_plane
 
 EPS = 1e-10
+
+
+def is_japanese():
+    locale = bpy.app.translations.locale or ""
+    return locale.lower().startswith("ja")
+
+
+def tr(ja, en):
+    return ja if is_japanese() else en
 
 
 def plane_line(f1, f2):
@@ -92,7 +101,7 @@ def refresh(context, bm, me, restored_edges=None):
 
 def restore_one_face(bm, bevel_face):
     if len(bevel_face.verts) != 4:
-        return False, "選択面が四角形ではありません", []
+        return False, tr("選択面が四角形ではありません", "The selected face is not a quad"), []
 
     edges = list(bevel_face.edges)
     best = None
@@ -109,18 +118,17 @@ def restore_one_face(bm, bevel_face):
             line = plane_line(f1, f2)
             if line is None:
                 continue
-            # Prefer the pair that requires the least movement of the bevel face.
             move = sum((v.co - project_line(v.co, line)).length for v in bevel_face.verts)
             if best is None or move < best[0]:
                 best = (move, e1, e2, line)
 
     if best is None:
-        return False, "元エッジを計算できません", []
+        return False, tr("元エッジを計算できません", "Could not calculate the original edge"), []
 
     _, long1, long2, line = best
     short_edges = [e for e in bevel_face.edges if e not in (long1, long2)]
     if len(short_edges) != 2:
-        return False, "ベベル幅エッジを特定できません", []
+        return False, tr("ベベル幅エッジを特定できません", "Could not identify the bevel width edges"), []
 
     targets = []
     for e in short_edges:
@@ -153,7 +161,7 @@ def restore_one_face(bm, bevel_face):
 
 def restore_single_boundary_vertex(bm, selected):
     if not selected.is_valid:
-        return False, "選択頂点が無効です", []
+        return False, tr("選択頂点が無効です", "The selected vertex is invalid"), []
 
     candidates = []
     for edge in selected.link_edges:
@@ -180,7 +188,7 @@ def restore_single_boundary_vertex(bm, selected):
                     candidates.append((move, other, target))
 
     if not candidates:
-        return False, "局所ベベル幅を特定できません", []
+        return False, tr("局所ベベル幅を特定できません", "Could not identify the local bevel width"), []
 
     _, other, target = min(candidates, key=lambda x: x[0])
 
@@ -210,7 +218,7 @@ def restore_single_boundary_vertex(bm, selected):
 def edges_from_selected_vertices(bm):
     selected = [v for v in bm.verts if v.select]
     if len(selected) < 2:
-        return None, "ベベル片側の境界頂点を2個以上選択してください"
+        return None, tr("ベベル片側の境界頂点を2個以上選択してください", "Select at least two boundary vertices along one side of the bevel")
 
     selected_set = set(selected)
     edges = [
@@ -218,13 +226,13 @@ def edges_from_selected_vertices(bm):
         if e.is_valid and e.verts[0] in selected_set and e.verts[1] in selected_set
     ]
     if not edges:
-        return None, "選択頂点をつなぐエッジがありません"
+        return None, tr("選択頂点をつなぐエッジがありません", "No edges connect the selected vertices")
 
     used = set()
     for e in edges:
         used.update(e.verts)
     if used != selected_set:
-        return None, "選択頂点は1本の連続した境界頂点列にしてください"
+        return None, tr("選択頂点は1本の連続した境界頂点列にしてください", "Selected vertices must form one continuous boundary chain")
 
     chain, msg = order_chain(edges)
     if chain is None:
@@ -235,7 +243,7 @@ def edges_from_selected_vertices(bm):
 def order_chain(edges):
     edges = list(dict.fromkeys(e for e in edges if e.is_valid))
     if not edges:
-        return None, "エッジが選択されていません"
+        return None, tr("エッジが選択されていません", "No edges are selected")
 
     adjacency = {}
     for e in edges:
@@ -243,13 +251,13 @@ def order_chain(edges):
             adjacency.setdefault(v, []).append(e)
 
     if any(len(es) > 2 for es in adjacency.values()):
-        return None, "選択エッジが分岐しています"
+        return None, tr("選択エッジが分岐しています", "The selected edge chain is branching")
 
     ends = [v for v, es in adjacency.items() if len(es) == 1]
     if len(edges) == 1:
         return edges, ""
     if len(ends) != 2:
-        return None, "片側の開いた連続エッジ列を選択してください"
+        return None, tr("片側の開いた連続エッジ列を選択してください", "Select an open continuous edge chain along one side of the bevel")
 
     ordered = []
     pv, pe = ends[0], None
@@ -263,7 +271,7 @@ def order_chain(edges):
         pe, pv = e, nv
 
     if len(ordered) != len(edges):
-        return None, "選択エッジ列をたどれません"
+        return None, tr("選択エッジ列をたどれません", "Could not follow the selected edge chain")
     return ordered, ""
 
 
@@ -377,15 +385,14 @@ def restore_edge_chain(bm, selected_edges):
 
     chosen = choose_consistent_candidates(ordered)
     if chosen is None:
-        return False, "ベベル片側の境界エッジとして認識できません", []
+        return False, tr("ベベル片側の境界エッジとして認識できません", "Could not recognize the selection as a boundary edge chain along one side of the bevel"), []
 
-    # Build a path of selected boundary vertices.
     if len(ordered) == 1:
         boundary_path = [ordered[0].verts[0], ordered[0].verts[1]]
     else:
         shared = set(ordered[0].verts) & set(ordered[1].verts)
         if not shared:
-            return False, "選択エッジ列が連続していません", []
+            return False, tr("選択エッジ列が連続していません", "The selected edge chain is not continuous"), []
         shared_v = next(iter(shared))
         boundary_path = [ordered[0].other_vert(shared_v), shared_v]
         current = shared_v
@@ -393,13 +400,10 @@ def restore_edge_chain(bm, selected_edges):
             current = e.other_vert(current)
             boundary_path.append(current)
 
-    # Get the corresponding opposite-side path from chosen bevel faces.
     opposite_path = []
     for i, c in enumerate(chosen):
         oe = c["opposite"]
-        be = c["boundary"]
         if i == 0:
-            # Match opposite endpoints to boundary endpoints by distance.
             b0, b1 = boundary_path[0], boundary_path[1]
             o0, o1 = oe.verts
             same = (o0.co - b0.co).length + (o1.co - b1.co).length
@@ -415,16 +419,12 @@ def restore_edge_chain(bm, selected_edges):
             elif oe.verts[1] == last:
                 opposite_path.append(oe.verts[0])
             else:
-                # Faces may meet through a welded corner rather than sharing the
-                # exact opposite edge endpoint. Choose the closest continuation.
                 a, b = oe.verts
                 opposite_path.append(a if (a.co - last.co).length <= (b.co - last.co).length else b)
 
     if len(opposite_path) != len(boundary_path):
-        return False, "反対側の境界頂点列を取得できません", []
+        return False, tr("反対側の境界頂点列を取得できません", "Could not determine the opposite boundary vertex chain"), []
 
-    # One target per cross-section. Average neighboring reconstructed lines for
-    # interior points to reduce small numerical discontinuities.
     targets = []
     for i, (bv, ov) in enumerate(zip(boundary_path, opposite_path)):
         mid = (bv.co + ov.co) * 0.5
@@ -437,7 +437,6 @@ def restore_edge_chain(bm, selected_edges):
         target = sum(qs, qs[0] * 0.0) / len(qs)
         targets.append(target)
 
-    # Delete bevel faces only after all geometry information has been collected.
     bevel_faces = list({c["bevel_face"] for c in chosen if c["bevel_face"].is_valid})
     if bevel_faces:
         bmesh.ops.delete(bm, geom=bevel_faces, context='FACES_ONLY')
@@ -456,14 +455,12 @@ def restore_edge_chain(bm, selected_edges):
         if len(verts) >= 2:
             bmesh.ops.pointmerge(bm, verts=verts, merge_co=target)
 
-        # Find surviving vertex at the target.
         survivor = min(
             (v for v in bm.verts if v.is_valid),
             key=lambda v: (v.co - target).length
         )
         merged_path.append(survivor)
 
-    # Remove accidental duplicate references while preserving order.
     path = []
     for v in merged_path:
         if not path or v != path[-1]:
@@ -487,8 +484,8 @@ def restore_edge_chain(bm, selected_edges):
 
 class MESH_OT_restore_bevel(bpy.types.Operator):
     bl_idname = "mesh.restore_bevel"
-    bl_label = "ベベルを元のエッジに戻す"
-    bl_description = "面1枚、境界エッジ列、境界頂点列、または頂点1個から局所的に復元します"
+    bl_label = "Restore Bevel Edge"
+    bl_description = "Restore applied bevel geometry from a face, boundary edge chain, boundary vertex chain, or a single boundary vertex"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -508,14 +505,14 @@ class MESH_OT_restore_bevel(bpy.types.Operator):
         if face_mode:
             fs = [f for f in bm.faces if f.select]
             if len(fs) != 1:
-                self.report({'ERROR'}, "面選択ではベベル面を1枚だけ選択してください")
+                self.report({'ERROR'}, tr("面選択ではベベル面を1枚だけ選択してください", "In Face Select mode, select exactly one bevel face"))
                 return {'CANCELLED'}
             ok, msg, restored = restore_one_face(bm, fs[0])
 
         elif edge_mode:
             es = [e for e in bm.edges if e.select]
             if not es:
-                self.report({'ERROR'}, "ベベル片側の境界エッジ列を選択してください")
+                self.report({'ERROR'}, tr("ベベル片側の境界エッジ列を選択してください", "Select a boundary edge chain along one side of the bevel"))
                 return {'CANCELLED'}
             ok, msg, restored = restore_edge_chain(bm, es)
 
@@ -532,7 +529,7 @@ class MESH_OT_restore_bevel(bpy.types.Operator):
                 ok, msg, restored = restore_edge_chain(bm, es)
 
         else:
-            self.report({'ERROR'}, "頂点・辺・面のいずれかの選択モードで実行してください")
+            self.report({'ERROR'}, tr("頂点・辺・面のいずれかの選択モードで実行してください", "Run this in Vertex, Edge, or Face Select mode"))
             return {'CANCELLED'}
 
         if not ok:
@@ -540,18 +537,13 @@ class MESH_OT_restore_bevel(bpy.types.Operator):
             return {'CANCELLED'}
 
         refresh(context, bm, me, restored)
-        self.report({'INFO'}, "ベベルを元のエッジへ復元しました")
+        self.report({'INFO'}, tr("ベベルを元のエッジへ復元しました", "Bevel restored to the original edge"))
         return {'FINISHED'}
 
 
 def menu_func(self, context):
     self.layout.separator()
-    locale = bpy.app.translations.locale or ""
-    label = (
-        "ベベルを元のエッジに戻す"
-        if locale.lower().startswith("ja")
-        else "Restore Bevel Edge"
-    )
+    label = tr("ベベルを元のエッジに戻す", "Restore Bevel Edge")
     self.layout.operator(
         MESH_OT_restore_bevel.bl_idname,
         text=label
