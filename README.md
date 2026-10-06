@@ -21,16 +21,20 @@ A Blender add-on that reconstructs the original sharp edge from already-applied 
 
 1. Download `restore_bevel_edge.py` from this repository.
 2. Open Blender.
-3. Open **Edit > Preferences > Add-ons**.
-4. Install the add-on from disk and select `restore_bevel_edge.py`.
-5. Enable **Restore Bevel Edge**.
+3. Go to **Edit > Preferences > Add-ons**.
+4. Open the Add-ons menu and choose **Install from Disk**.
+5. Select the downloaded `restore_bevel_edge.py` file.
+6. Enable **Restore Bevel Edge** in the Add-ons list.
+
+After installation, the command is available from the right-click context menu in Mesh Edit Mode.
 
 ## Usage
 
-1. Select the mesh and enter **Edit Mode**.
-2. Select the bevel geometry using Face, Edge, or Vertex Select mode.
-3. Right-click in the 3D Viewport.
-4. Choose **Restore Bevel Edge**.
+1. Select a mesh object.
+2. Enter **Edit Mode**.
+3. Switch to Face, Edge, or Vertex Select mode and select the bevel geometry you want to restore.
+4. Right-click in the 3D Viewport.
+5. Choose **Restore Bevel Edge**.
 
 ### Face Select
 
@@ -78,11 +82,36 @@ This project is licensed under the GNU General Public License v3.0. See [LICENSE
 - Undo対応
 - Blenderの表示言語に応じて、メニュー・成功メッセージ・エラーメッセージを英語／日本語で表示
 
+### インストール方法
+
+1. このリポジトリから `restore_bevel_edge.py` をダウンロードします。
+2. Blenderを起動します。
+3. **編集（Edit） > プリファレンス（Preferences） > アドオン（Add-ons）** を開きます。
+4. アドオン画面のメニューから **ディスクからインストール（Install from Disk）** を選択します。
+5. ダウンロードした `restore_bevel_edge.py` を選択します。
+6. アドオン一覧で **Restore Bevel Edge** を有効にします。
+
+インストール後は、メッシュの編集モードで右クリックしたときのコンテキストメニューから実行できます。
+
 ### 使い方
 
-1. メッシュを **Edit Mode** にします。
-2. Face / Edge / Vertex のいずれかで対象のベベル形状を選択します。
-3. 3Dビューで右クリックします。
-4. **「ベベルを元のエッジに戻す」** を実行します。
+1. メッシュオブジェクトを選択します。
+2. **編集モード（Edit Mode）** に入ります。
+3. Face / Edge / Vertex のいずれかの選択モードに切り替え、元に戻したいベベル形状を選択します。
+4. 3Dビューで右クリックします。
+5. **「ベベルを元のエッジに戻す」** を実行します。
+
+#### 面選択（Face Select）
+
+ベベル面を1枚だけ選択します。
+
+#### 辺選択（Edge Select）
+
+ベベル片側の境界エッジを1本、または分岐していない連続した境界エッジ列を選択します。
+
+#### 頂点選択（Vertex Select）
+
+- 境界頂点を1つ選択すると、その位置のベベルだけを局所的に復元します。
+- ベベル片側の連続した境界頂点を2つ以上選択すると、ベベル列を復元します。
 
 周囲の面情報から元のエッジを推定するため、トポロジーが大きく変更されている場合や、元の面を特定できない形状では正しく復元できないことがあります。
